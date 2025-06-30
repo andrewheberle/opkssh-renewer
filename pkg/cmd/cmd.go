@@ -56,6 +56,7 @@ type rootCommand struct {
 	debug        bool
 	forceRenewal bool
 	name         string
+	age          time.Duration
 
 	logger *slog.Logger
 
@@ -70,6 +71,7 @@ func (c *rootCommand) Init(cd *simplecobra.Commandeer) error {
 	// command line flags
 	cmd := cd.CobraCommand
 	cmd.Flags().StringVar(&c.name, "name", "id_opkssh", "Name for opkssh identity key/certificate file(s)")
+	cmd.Flags().DurationVar(&c.age, "maxage", 23*time.Hour, "Maximum age until renewal is required")
 	cmd.Flags().BoolVar(&c.forceRenewal, "force", false, "Force renewal")
 	cmd.Flags().BoolVar(&c.debug, "debug", false, "Enable debug logging")
 
@@ -105,7 +107,7 @@ func (c *rootCommand) Run(ctx context.Context, cd *simplecobra.Commandeer, args 
 	opkKey := filepath.Join(sshDir, c.name)
 
 	// check if its fresh
-	if identityFresh(opkKey, 23*time.Hour) {
+	if identityFresh(opkKey, c.age) {
 		if c.forceRenewal {
 			c.logger.Info("continuing as renewal forced even though not required")
 		} else {
