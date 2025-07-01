@@ -1,9 +1,9 @@
 package sshagent
 
 import (
-	"net"
+	"golang.org/x/crypto/ssh/agent"
 )
 
-type Connection struct {
-	net.Conn
+type Agent struct {
+	agent.ExtendedAgent
 }
