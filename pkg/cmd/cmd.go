@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -14,12 +15,28 @@ import (
 )
 
 func addToAgent(name string) error {
+	// try to work out if the ssh-agent is running
+	check := exec.Command("ssh-add", "-l")
+	if err := check.Run(); err != nil {
+		// maybe not running
+		agent := exec.Command("ssh-agent")
+		if err := agent.Run(); err != nil {
+			return fmt.Errorf("error starting ssh-agent: %w", err)
+		}
+	}
+
+	// add to agent
 	cmd := exec.Command("ssh-add", name)
 
 	return cmd.Run()
 }
 
 func removeFromAgent(name string) error {
+	// if file name is not found we can't remove so just skip
+	if _, err := os.Stat(name); errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+
 	cmd := exec.Command("ssh-add", "-d", name)
 
 	return cmd.Run()
@@ -146,7 +163,8 @@ func (c *rootCommand) Run(ctx context.Context, cd *simplecobra.Commandeer, args 
 	// remove old identity
 	c.logger.Info("removing old identity from ssh-agent")
 	if err := removeFromAgent(opkKey); err != nil {
-		return fmt.Errorf("problem removing old identity: %w", err)
+		// this is not fatal
+		c.logger.Warn("problem removing old identity", "error", err)
 	}
 
 	// move new files into place
