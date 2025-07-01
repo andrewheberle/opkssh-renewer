@@ -5,12 +5,7 @@ import (
 	"os"
 )
 
-func Connect() (*Connection, error) {
+func connect() (net.Conn, error) {
 	socket := os.Getenv("SSH_AUTH_SOCK")
-	conn, err := net.Dial("unix", socket)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Connection{conn}, nil
+	return net.Dial("unix", socket)
 }
