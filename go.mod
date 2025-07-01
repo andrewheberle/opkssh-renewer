@@ -3,8 +3,10 @@ module github.com/andrewheberle/opkssh-renewer
 go 1.24.2
 
 require (
+	github.com/Microsoft/go-winio v0.6.2
 	github.com/andrewheberle/simplecommand v0.3.0
 	github.com/bep/simplecobra v0.6.0
+	golang.org/x/crypto v0.32.0
 )
 
 require (

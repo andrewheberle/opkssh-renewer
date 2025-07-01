@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -10,9 +11,26 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/andrewheberle/opkssh-renewer/pkg/sshagent"
 	"github.com/andrewheberle/simplecommand"
 	"github.com/bep/simplecobra"
+	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/agent"
 )
+
+func addKeyCert(key *ecdsa.PrivateKey, cert *ssh.Certificate) error {
+	conn, err := sshagent.Connect()
+	if err != nil {
+		return fmt.Errorf("could not connect to agent: %w", err)
+	}
+
+	agentClient := agent.NewClient(conn)
+
+	return agentClient.Add(agent.AddedKey{
+		PrivateKey:  key,
+		Certificate: cert,
+	})
+}
 
 func addToAgent(name string) error {
 	// try to work out if the ssh-agent is running
