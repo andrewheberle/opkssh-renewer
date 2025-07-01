@@ -19,12 +19,10 @@ import (
 )
 
 func addKeyCert(key *ecdsa.PrivateKey, cert *ssh.Certificate) error {
-	conn, err := sshagent.Connect()
+	agentClient, err := sshagent.NewAgent()
 	if err != nil {
 		return fmt.Errorf("could not connect to agent: %w", err)
 	}
-
-	agentClient := agent.NewClient(conn)
 
 	return agentClient.Add(agent.AddedKey{
 		PrivateKey:  key,
