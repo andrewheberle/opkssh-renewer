@@ -11,7 +11,7 @@ type Agent struct {
 func NewAgent() (*Agent, error) {
 	conn, err := connect()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	client := agent.NewClient(conn)

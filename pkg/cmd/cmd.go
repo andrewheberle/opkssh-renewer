@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"crypto/ecdsa"
-	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -18,7 +17,71 @@ import (
 	"golang.org/x/crypto/ssh/agent"
 )
 
-func addKeyCert(key *ecdsa.PrivateKey, cert *ssh.Certificate) error {
+func loadKey(name string) (*ecdsa.PrivateKey, error) {
+	pemBytes, err := os.ReadFile(name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read private key file %q: %w", name, err)
+	}
+
+	privateKey, err := ssh.ParseRawPrivateKey(pemBytes)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse private key file: %w", err)
+	}
+
+	ecdsaKey, ok := privateKey.(*ecdsa.PrivateKey)
+	if !ok {
+		return nil, fmt.Errorf("private key from %q is not an ECDSA key; its type is %T", name, privateKey)
+	}
+
+	return ecdsaKey, nil
+}
+
+func loadpubkey(name string) (ssh.PublicKey, string, error) {
+	// Read the content of the file
+	keyBytes, err := os.ReadFile(name)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to read SSH key/certificate file %q: %w", name, err)
+	}
+
+	// Parse the certificate.
+	parsedKey, comment, _, _, err := ssh.ParseAuthorizedKey(keyBytes)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to parse SSH public key/certificate from %q: %w", name, err)
+	}
+
+	return parsedKey, comment, nil
+}
+
+func loadcert(name string) (*ssh.Certificate, string, error) {
+	parsedKey, comment, err := loadpubkey(name)
+	if err != nil {
+		return nil, "", err
+	}
+
+	// Type assert to *ssh.Certificate. If it's not a certificate, this will fail.
+	cert, ok := parsedKey.(*ssh.Certificate)
+	if !ok {
+		return nil, "", fmt.Errorf("the provided key in %q is not an SSH certificate, it is a %T", name, parsedKey)
+	}
+
+	return cert, comment, nil
+}
+
+func addToAgent(name string) error {
+	key, err := loadKey(name)
+	if err != nil {
+		return fmt.Errorf("could not load private key: %w", err)
+	}
+
+	cert, comment, err := loadcert(name + "-cert.pub")
+	if err != nil {
+		return fmt.Errorf("could not load certificate: %w", err)
+	}
+
+	return addKeyCertToAgent(key, cert, comment)
+}
+
+func addKeyCertToAgent(key *ecdsa.PrivateKey, cert *ssh.Certificate, comment string) error {
 	agentClient, err := sshagent.NewAgent()
 	if err != nil {
 		return fmt.Errorf("could not connect to agent: %w", err)
@@ -27,35 +90,22 @@ func addKeyCert(key *ecdsa.PrivateKey, cert *ssh.Certificate) error {
 	return agentClient.Add(agent.AddedKey{
 		PrivateKey:  key,
 		Certificate: cert,
+		Comment:     comment,
 	})
 }
 
-func addToAgent(name string) error {
-	// try to work out if the ssh-agent is running
-	check := exec.Command("ssh-add", "-l")
-	if err := check.Run(); err != nil {
-		// maybe not running
-		agent := exec.Command("ssh-agent")
-		if err := agent.Run(); err != nil {
-			return fmt.Errorf("error starting ssh-agent: %w", err)
-		}
-	}
-
-	// add to agent
-	cmd := exec.Command("ssh-add", name)
-
-	return cmd.Run()
-}
-
 func removeFromAgent(name string) error {
-	// if file name is not found we can't remove so just skip
-	if _, err := os.Stat(name); errors.Is(err, os.ErrNotExist) {
-		return nil
+	pub, _, err := loadpubkey(name)
+	if err != nil {
+		return err
 	}
 
-	cmd := exec.Command("ssh-add", "-d", name)
+	agentClient, err := sshagent.NewAgent()
+	if err != nil {
+		return fmt.Errorf("could not connect to agent: %w", err)
+	}
 
-	return cmd.Run()
+	return agentClient.Remove(pub)
 }
 
 func renameIdentity(src, dst string) error {
@@ -178,7 +228,7 @@ func (c *rootCommand) Run(ctx context.Context, cd *simplecobra.Commandeer, args 
 
 	// remove old identity
 	c.logger.Info("removing old identity from ssh-agent")
-	if err := removeFromAgent(opkKey); err != nil {
+	if err := removeFromAgent(opkKey + "-cert.pub"); err != nil {
 		// this is not fatal
 		c.logger.Warn("problem removing old identity", "error", err)
 	}
