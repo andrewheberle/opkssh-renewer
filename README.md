@@ -1,8 +1,8 @@
 # opkssh-renewer
 
-This is a simple wrapper for [opkssh](https://github.com/openpubkey/opkssh) to renew certificates and (re-)add them to a running ssh-agent as required.
+This is a wrapper for [opkssh](https://github.com/openpubkey/opkssh) to renew certificates and (re-)add them to a running ssh-agent as required.
 
-By default if the expect key/certificate is not found or is older than 23-hours it will be renewed by running "opkssh login".
+By default, if the expected key/certificate is not found or is older than 23-hours it will be renewed by running "opkssh login".
 
 ## Process
 
@@ -14,7 +14,7 @@ By default if the expect key/certificate is not found or is older than 23-hours 
 
 ## Requirements
 
-As this process attempts to add the opkssh identity to the local "ssh-agent", the "OpenSSH Agent" Windows service must be set to "Manual" startup.
+As this process attempts to add the opkssh identity to the local "ssh-agent", the "OpenSSH Agent" Windows service must be set to "Manual" startup or the "ssh-agent" process and assocaited "SSH_AUTH_SOCK" environment variable must be set under Linux.
 
 ## Using with PuTTY
 
