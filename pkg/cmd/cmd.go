@@ -119,20 +119,14 @@ func renameIdentity(src, dst string) error {
 	return nil
 }
 
-func identityFresh(name string, age time.Duration) bool {
+func identityAge(name string) time.Duration {
 	// stat file
 	stat, err := os.Stat(name)
 	if err != nil {
-		return false
+		return -1
 	}
 
-	// if file is older than time.Now() - age then its not fresh
-	if stat.ModTime().Before(time.Now().Add(-age)) {
-		return false
-	}
-
-	// otherwise its fresh
-	return true
+	return time.Since(stat.ModTime())
 }
 
 type rootCommand struct {
@@ -190,13 +184,16 @@ func (c *rootCommand) Run(ctx context.Context, cd *simplecobra.Commandeer, args 
 	opkKey := filepath.Join(sshDir, c.name)
 
 	// check if its fresh
-	if identityFresh(opkKey, c.age) {
-		if c.forceRenewal {
-			c.logger.Info("continuing as renewal forced even though not required")
-		} else {
-			// just (re-)add to agent
-			c.logger.Info("no renewal required but (re-)adding to SSH agent", "key", opkKey, "certificate", opkKey+"-cert.pub")
-			return addToAgent(opkKey)
+	if age := identityAge(opkKey); age >= 0 {
+		// if identityAge returns >= the identity file modification time could be found, so check if renewal is required/forced
+		if age < c.age {
+			if c.forceRenewal {
+				c.logger.Info("continuing as renewal forced even though not required", "age", age)
+			} else {
+				// just (re-)add to agent
+				c.logger.Info("no renewal required but (re-)adding to SSH agent", "key", opkKey, "certificate", opkKey+"-cert.pub", "age", age)
+				return addToAgent(opkKey)
+			}
 		}
 	}
 
