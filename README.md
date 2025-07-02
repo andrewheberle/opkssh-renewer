@@ -1,8 +1,17 @@
 # opkssh-renewer
 
-This is a wrapper for [opkssh](https://github.com/openpubkey/opkssh) to renew certificates and (re-)add them to a running ssh-agent as required.
+This is a wrapper for [opkssh](https://github.com/openpubkey/opkssh) to renew certificates and (re-)add them to a running ssh-agent.
 
 By default, if the expected key/certificate is not found or is older than 23-hours it will be renewed by running "opkssh login".
+
+## Command Line Options
+
+The following command line options are supported:
+
+* `--debug` - Enable debug logging
+* `--force` - Force the renwwal of identity even if it is not required
+* `--maxage` - Age of identity before renewal is required (default `23h`)
+* `--name` - Name of identity file(s) (default `id_opkssh`)
 
 ## Process
 
