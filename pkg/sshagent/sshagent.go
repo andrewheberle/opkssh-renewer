@@ -1,10 +1,16 @@
+// The sshagent package provides an OS independent way to connect to a running "ssh-agent" process
+// which returns an [*Agent] that is a wrapper for [agent.ExtendedAgent].
+//
+// On Windows, named pipes are used to connect to a local "ssh-agent", while on other platforms
+// the "SSH_AUTH_SOCK" environment variable is expected to contain the path to a unix socket
+// in order to communicate with the running "ssh-agent". 
 package sshagent
 
 import (
 	"golang.org/x/crypto/ssh/agent"
 )
 
-// Agent wraps agent.ExtendedAgent
+// Agent wraps [agent.ExtendedAgent]
 type Agent struct {
 	agent.ExtendedAgent
 }
