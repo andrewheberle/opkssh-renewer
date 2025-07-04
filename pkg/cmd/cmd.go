@@ -129,6 +129,15 @@ func identityAge(name string) time.Duration {
 	return time.Since(stat.ModTime())
 }
 
+func mkdirTemp(dir, pattern string) (string, error) {
+	// ensure parent dir exists
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return "", err
+	}
+
+	return os.MkdirTemp(dir, pattern)
+}
+
 type rootCommand struct {
 	debug        bool
 	forceRenewal bool
@@ -198,7 +207,7 @@ func (c *rootCommand) Run(ctx context.Context, cd *simplecobra.Commandeer, args 
 	}
 
 	// create temp dir
-	tmpDir, err := os.MkdirTemp(sshDir, "opkssh*")
+	tmpDir, err := mkdirTemp(sshDir, "opkssh*")
 	if err != nil {
 		return fmt.Errorf("could not create temp dir: %w", err)
 	}
