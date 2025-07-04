@@ -36,7 +36,8 @@ func loadKey(name string) (*ecdsa.PrivateKey, error) {
 	return ecdsaKey, nil
 }
 
-func loadpubkey(name string) (ssh.PublicKey, string, error) {
+// The loadpubkey function will read and parse the provided file name as an OpenSSH public key
+func loadpubkey(name string) (public ssh.PublicKey, comment string, err error) {
 	// Read the content of the file
 	keyBytes, err := os.ReadFile(name)
 	if err != nil {
@@ -52,7 +53,9 @@ func loadpubkey(name string) (ssh.PublicKey, string, error) {
 	return parsedKey, comment, nil
 }
 
-func loadcert(name string) (*ssh.Certificate, string, error) {
+// This function will load the provided OpenSSH public key and ensure it is a
+// SSH certificate and return the certificate and comment.
+func loadcert(name string) (cert *ssh.Certificate, comment string, err error) {
 	parsedKey, comment, err := loadpubkey(name)
 	if err != nil {
 		return nil, "", err
@@ -67,7 +70,7 @@ func loadcert(name string) (*ssh.Certificate, string, error) {
 	return cert, comment, nil
 }
 
-func addToAgent(name string) error {
+func addToAgent(name string, life time.Duration) error {
 	key, err := loadKey(name)
 	if err != nil {
 		return fmt.Errorf("could not load private key: %w", err)
@@ -78,19 +81,20 @@ func addToAgent(name string) error {
 		return fmt.Errorf("could not load certificate: %w", err)
 	}
 
-	return addKeyCertToAgent(key, cert, comment)
+	return addKeyCertToAgent(key, cert, comment, life)
 }
 
-func addKeyCertToAgent(key *ecdsa.PrivateKey, cert *ssh.Certificate, comment string) error {
+func addKeyCertToAgent(key *ecdsa.PrivateKey, cert *ssh.Certificate, comment string, life time.Duration) error {
 	agentClient, err := sshagent.NewAgent()
 	if err != nil {
 		return fmt.Errorf("could not connect to agent: %w", err)
 	}
 
 	return agentClient.Add(agent.AddedKey{
-		PrivateKey:  key,
-		Certificate: cert,
-		Comment:     comment,
+		PrivateKey:   key,
+		Certificate:  cert,
+		Comment:      comment,
+		LifetimeSecs: uint32(life.Seconds()),
 	})
 }
 
@@ -190,9 +194,9 @@ func (c *rootCommand) Run(ctx context.Context, cd *simplecobra.Commandeer, args 
 			if c.forceRenewal {
 				c.logger.Info("continuing as renewal forced even though not required", "age", age)
 			} else {
-				// just (re-)add to agent
-				c.logger.Info("no renewal required but (re-)adding to SSH agent", "key", opkKey, "certificate", opkKey+"-cert.pub", "age", age)
-				return addToAgent(opkKey)
+				// just (re-)add to agent (with age - 1-hour lifetime)
+				c.logger.Info("no renewal required but (re-)adding to SSH agent", "key", opkKey, "certificate", opkKey+"-cert.pub", "age", age, "lifetime", c.age)
+				return addToAgent(opkKey, age-time.Hour)
 			}
 		}
 	}
@@ -218,8 +222,8 @@ func (c *rootCommand) Run(ctx context.Context, cd *simplecobra.Commandeer, args 
 	}
 
 	// add to ssh-agent
-	c.logger.Info("adding new identity to ssh-agent")
-	if err := addToAgent(newOpkKey); err != nil {
+	c.logger.Info("adding new identity to ssh-agent", "lifetime", c.age)
+	if err := addToAgent(newOpkKey, c.age); err != nil {
 		return fmt.Errorf("problem adding to agent: %w", err)
 	}
 
