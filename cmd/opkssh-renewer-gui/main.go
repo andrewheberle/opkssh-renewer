@@ -4,11 +4,12 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/driver/desktop"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
 func main() {
-	appname := "Hello World"
+	appname := "OpkSSH Renewer"
 	a := app.New()
 	w := a.NewWindow(appname)
 
@@ -22,6 +23,7 @@ func main() {
 	desk, isDesktopApp := a.(desktop.App)
 	if isDesktopApp {
 		desk.SetSystemTrayMenu(trayMenu)
+		desk.SetSystemTrayIcon(theme.StorageIcon())
 		w.SetCloseIntercept(func() {
 			// make sure close actually closes
 			a.Quit()
