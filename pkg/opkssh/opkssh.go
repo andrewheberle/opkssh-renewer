@@ -2,6 +2,7 @@ package opkssh
 
 import (
 	"crypto/ecdsa"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/andrewheberle/opkssh-renewer/pkg/sshagent"
+	"github.com/openpubkey/opkssh/commands/config"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 )
@@ -18,6 +20,7 @@ type Renewer struct {
 	name  string
 	life  time.Duration
 	force bool
+	home  string
 
 	logger *slog.Logger
 }
@@ -30,6 +33,13 @@ func NewRenewer(name string, life time.Duration, force bool, opts ...RenewerOpti
 		force:  force,
 		logger: slog.New(slog.DiscardHandler),
 	}
+
+	// find home dir
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return nil, err
+	}
+	r.home = home
 
 	// set options
 	for _, o := range opts {
@@ -106,6 +116,22 @@ func (r *Renewer) Run() error {
 	}
 
 	return nil
+}
+
+// returns opkssh config
+func (r *Renewer) Config() (*config.ClientConfig, error) {
+	cfg := filepath.Join(r.home, ".opk", "config.yml")
+	b, err := os.ReadFile(cfg)
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			return nil, err
+		}
+
+		// set to default
+		b = config.DefaultClientConfig
+	}
+
+	return config.NewClientConfig(b)
 }
 
 func loadKey(name string) (*ecdsa.PrivateKey, error) {
