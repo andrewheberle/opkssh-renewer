@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"time"
 
 	"github.com/andrewheberle/opkssh-renewer/pkg/sshagent"
 	"github.com/andrewheberle/simplecommand"
 	"github.com/bep/simplecobra"
+	"github.com/openpubkey/opkssh/commands"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 )
@@ -138,6 +138,17 @@ func mkdirTemp(dir, pattern string) (string, error) {
 	return os.MkdirTemp(dir, pattern)
 }
 
+func opksshLogin(keypath string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancel()
+
+	// set up opkssh login command
+	login := commands.NewLogin(false, "", false, "", false, false, false, "", keypath, "")
+
+	// run it
+	return login.Run(ctx)
+}
+
 type rootCommand struct {
 	debug        bool
 	forceRenewal bool
@@ -216,8 +227,7 @@ func (c *rootCommand) Run(ctx context.Context, cd *simplecobra.Commandeer, args 
 	// do opkssh login
 	c.logger.Info("starting opkssh login flow")
 	newOpkKey := filepath.Join(tmpDir, c.name)
-	opkssh := exec.Command("opkssh", "login", "-i", newOpkKey)
-	if err := opkssh.Run(); err != nil {
+	if err := opksshLogin(newOpkKey); err != nil {
 		return fmt.Errorf("problem with opkssh login: %w", err)
 	}
 
