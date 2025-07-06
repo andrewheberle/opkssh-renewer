@@ -2,7 +2,13 @@
 
 This is a wrapper for [opkssh](https://github.com/openpubkey/opkssh) to renew certificates and (re-)add them to a running ssh-agent.
 
-By default, if the expected key/certificate is not found or is older than 23-hours it will be renewed by running "opkssh login".
+By default, if the expected key/certificate is not found or is older than 23-hours it will be renewed by running the opkssh login process (this does not depend on the opkssh binary being present).
+
+## Motivation
+
+At the moment, opkssh does not directly support adding keys issued via the OIDC login process to a running ssh-agent process, so implementing this bidges that gap for tye time being. 
+
+In addition a GUI is in the eary stages of prototyping, however this may or may not be completed. 
 
 ## Command Line Options
 
@@ -28,7 +34,8 @@ Running `opkssh-renewer` performs the following steps:
 ### Windows
 
 1. The "OpenSSH Agent" Windows service must be set to "Manual" startup
-2. Run "ssh-agent.exe" 
+2. Run "ssh-agent.exe"
+3. Configure "opkssh" for your chosent identity provider (optional)
 
 ### Linux
 
