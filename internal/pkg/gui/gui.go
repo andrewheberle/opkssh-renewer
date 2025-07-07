@@ -29,6 +29,7 @@ type App struct {
 	age              binding.String
 	forceRenewal     binding.Bool
 	settingsIdentity binding.String
+	identity         binding.String
 
 	// labels
 	ageLabel    *widget.Label
@@ -89,6 +90,8 @@ func Create(appname string, fs embed.FS) (*App, error) {
 	a.forceRenewal = binding.NewBool()
 	a.settingsIdentity = binding.NewString()
 	a.settingsIdentity.Set(identity)
+	a.identity = binding.NewString()
+	a.identity.Set(identity)
 
 	// labels
 	a.ageLabel = widget.NewLabelWithData(a.age)
@@ -296,7 +299,7 @@ func (a *App) content() *fyne.Container {
 		),
 		container.New(
 			layout.NewHBoxLayout(),
-			widget.NewLabelWithData(a.settingsIdentity),
+			widget.NewLabelWithData(a.identity),
 			a.ageLabel,
 			a.renewButton,
 			a.forceCheck,
@@ -362,8 +365,14 @@ func (a *App) createSettingsPopup() {
 					return
 				}
 
+				current, err := a.identity.Get()
+				if err != nil {
+					a.notification("Error", "There was a problem saving your settings")
+					return
+				}
+
 				// does renewer need recreating?
-				if v != a.app.Preferences().StringWithFallback("identity", "id_opkssh") {
+				if v != current {
 					renewer, err := opkssh.NewRenewer(v, time.Hour*23)
 					if err != nil {
 						a.notification("Error", "There was a problem setting up the new renewer")
@@ -377,8 +386,9 @@ func (a *App) createSettingsPopup() {
 					a.setagelabel()
 				}
 
-				// set in preferences
+				// set in preferences and current value
 				a.app.Preferences().SetString("identity", v)
+				a.identity.Set(v)
 			},
 			OnCancel: func() {
 				// set back to value from preferences
