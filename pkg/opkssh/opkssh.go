@@ -1,17 +1,16 @@
 package opkssh
 
 import (
+	"context"
 	"crypto/ecdsa"
-	"errors"
 	"fmt"
 	"log/slog"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"time"
 
 	"github.com/andrewheberle/opkssh-renewer/pkg/sshagent"
-	"github.com/openpubkey/opkssh/commands/config"
+	"github.com/openpubkey/opkssh/commands"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 )
@@ -60,10 +59,10 @@ func (r *Renewer) Run() error {
 	sshDir := filepath.Join(home, ".ssh")
 
 	// use ~/.ssh/id_opkssh for key
-	opkKey := filepath.Join(sshDir, r.name)
+	opkKey := r.identityPath()
 
 	// check if its fresh
-	if age := identityAge(opkKey); age >= 0 {
+	if age := r.IdentityAge(); age >= 0 {
 		// if identityAge returns >= the identity file modification time could be found, so check if renewal is required/forced
 		if age < r.life {
 			if r.force {
@@ -86,8 +85,7 @@ func (r *Renewer) Run() error {
 	// do opkssh login
 	r.logger.Info("starting opkssh login flow")
 	newOpkKey := filepath.Join(tmpDir, r.name)
-	opkssh := exec.Command("opkssh", "login", "-i", newOpkKey)
-	if err := opkssh.Run(); err != nil {
+	if err := opksshLogin(newOpkKey); err != nil {
 		return fmt.Errorf("problem with opkssh login: %w", err)
 	}
 
@@ -118,20 +116,35 @@ func (r *Renewer) Run() error {
 	return nil
 }
 
-// returns opkssh config
-func (r *Renewer) Config() (*config.ClientConfig, error) {
-	cfg := filepath.Join(r.home, ".opk", "config.yml")
-	b, err := os.ReadFile(cfg)
+// returns age of identity
+func (r *Renewer) IdentityAge() time.Duration {
+	// stat file
+	stat, err := os.Stat(r.identityPath())
 	if err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-			return nil, err
-		}
-
-		// set to default
-		b = config.DefaultClientConfig
+		return -1
 	}
 
-	return config.NewClientConfig(b)
+	return time.Since(stat.ModTime())
+}
+
+// returns name of identity file
+func (r *Renewer) Name() string {
+	return r.name
+}
+
+func (r *Renewer) identityPath() string {
+	return filepath.Join(r.home, ".ssh", r.name)
+}
+
+func opksshLogin(keypath string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancel()
+
+	// set up opkssh login command
+	login := commands.NewLogin(false, "", false, "", false, false, false, "", keypath, "")
+
+	// run it
+	return login.Run(ctx)
 }
 
 func loadKey(name string) (*ecdsa.PrivateKey, error) {
@@ -234,16 +247,6 @@ func renameIdentity(src, dst string) error {
 	}
 
 	return nil
-}
-
-func identityAge(name string) time.Duration {
-	// stat file
-	stat, err := os.Stat(name)
-	if err != nil {
-		return -1
-	}
-
-	return time.Since(stat.ModTime())
 }
 
 func mkdirTemp(dir, pattern string) (string, error) {
