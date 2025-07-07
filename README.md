@@ -6,9 +6,7 @@ By default, if the expected key/certificate is not found or is older than 23-hou
 
 ## Motivation
 
-At the moment, opkssh does not directly support adding keys issued via the OIDC login process to a running ssh-agent process, so implementing this bidges that gap for tye time being. 
-
-In addition a GUI is in the eary stages of prototyping, however this may or may not be completed. 
+At the moment, opkssh does not directly support adding keys issued via the OIDC login process to a running ssh-agent process, so implementing this bidges that gap for tye time being.
 
 ## Command Line Options
 
@@ -50,3 +48,11 @@ eval 'ssh-agent -s'
 As PuTTY has it's own SSH agent implementatation (Pageant), you must use a bridge between the two protocols such as https://github.com/ndbeals/winssh-pageant.
 
 This implementation will allow PuTTY to use keys added to the native Windows ssh-agent.
+
+## GUI
+
+A GUI is available however this is in early stages of development and is not expected to be reliable.
+
+The GUI runs as a daemon and will provide a notification when the current identity is close to or has expired and allow renewing of this identity.
+
+This is a very unpolished solution at this time and should not be relied upon for production use.
