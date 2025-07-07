@@ -16,20 +16,19 @@ import (
 )
 
 type Renewer struct {
-	name  string
-	life  time.Duration
-	force bool
-	home  string
+	name string
+	life time.Duration
+
+	home string
 
 	logger *slog.Logger
 }
 
-func NewRenewer(name string, life time.Duration, force bool, opts ...RenewerOption) (*Renewer, error) {
+func NewRenewer(name string, life time.Duration, opts ...RenewerOption) (*Renewer, error) {
 	// defaults
 	r := &Renewer{
 		name:   name,
 		life:   life,
-		force:  force,
 		logger: slog.New(slog.DiscardHandler),
 	}
 
@@ -48,7 +47,15 @@ func NewRenewer(name string, life time.Duration, force bool, opts ...RenewerOpti
 	return r, nil
 }
 
-func (r *Renewer) Run() error {
+func (r *Renewer) Renew() error {
+	return r.run(false)
+}
+
+func (r *Renewer) ForceRenew() error {
+	return r.run(true)
+}
+
+func (r *Renewer) run(force bool) error {
 	// find home dir
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -65,7 +72,7 @@ func (r *Renewer) Run() error {
 	if age := r.IdentityAge(); age >= 0 {
 		// if identityAge returns >= the identity file modification time could be found, so check if renewal is required/forced
 		if age < r.life {
-			if r.force {
+			if force {
 				r.logger.Info("continuing as renewal forced even though not required", "age", age)
 			} else {
 				// just (re-)add to agent

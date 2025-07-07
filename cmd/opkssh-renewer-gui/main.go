@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/andrewheberle/opkssh-renewer/pkg/gui"
+	"github.com/andrewheberle/opkssh-renewer/internal/pkg/gui"
 )
 
 //go:embed icons

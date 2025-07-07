@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/andrewheberle/opkssh-renewer/pkg/opkssh"
+	"github.com/andrewheberle/opkssh-renewer/internal/pkg/opkssh"
 	"github.com/andrewheberle/simplecommand"
 	"github.com/bep/simplecobra"
 )
@@ -50,7 +50,7 @@ func (c *rootCommand) PreRun(this, runner *simplecobra.Commandeer) error {
 		logLevel.Set(slog.LevelDebug)
 	}
 
-	renewer, err := opkssh.NewRenewer(c.name, c.age, c.forceRenewal, opkssh.WithLogger(c.logger))
+	renewer, err := opkssh.NewRenewer(c.name, c.age, opkssh.WithLogger(c.logger))
 	if err != nil {
 		return err
 	}
@@ -60,7 +60,11 @@ func (c *rootCommand) PreRun(this, runner *simplecobra.Commandeer) error {
 }
 
 func (c *rootCommand) Run(ctx context.Context, cd *simplecobra.Commandeer, args []string) error {
-	return c.renewer.Run()
+	if c.forceRenewal {
+		return c.renewer.ForceRenew()
+	}
+
+	return c.renewer.Renew()
 }
 
 func Execute(args []string) error {

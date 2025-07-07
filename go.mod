@@ -4,6 +4,7 @@ go 1.24.2
 
 require (
 	fyne.io/fyne/v2 v2.6.1
+	fyne.io/systray v1.11.0
 	github.com/Microsoft/go-winio v0.6.2
 	github.com/andrewheberle/simplecommand v0.3.0
 	github.com/bep/simplecobra v0.6.0
@@ -13,7 +14,6 @@ require (
 
 require (
 	filippo.io/bigmod v0.0.3 // indirect
-	fyne.io/systray v1.11.0 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/andrewheberle/simpleviper v1.1.1 // indirect
 	github.com/awnumar/memcall v0.1.2 // indirect
