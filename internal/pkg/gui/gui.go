@@ -12,6 +12,7 @@ import (
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"fyne.io/systray"
 	"github.com/andrewheberle/opkssh-renewer/internal/pkg/opkssh"
@@ -24,9 +25,10 @@ type App struct {
 	expiryClose   bool
 
 	// bindings
-	statusText   binding.String
-	age          binding.String
-	forceRenewal binding.Bool
+	statusText       binding.String
+	age              binding.String
+	forceRenewal     binding.Bool
+	settingsIdentity binding.String
 
 	// labels
 	ageLabel    *widget.Label
@@ -34,17 +36,18 @@ type App struct {
 	titleLabel  *widget.Label
 
 	// widgets
-	forceCheck  *widget.Check
-	renewButton *widget.Button
+	forceCheck     *widget.Check
+	renewButton    *widget.Button
+	settingsButton *widget.Button
+	settingsPopup  *widget.PopUp
 
 	renewer *opkssh.Renewer
 
-	app    fyne.App
-	window fyne.Window
+	app        fyne.App
+	mainWindow fyne.Window
 }
 
-func Create(appname string, fs embed.FS, identity string) (*App, error) {
-
+func Create(appname string, fs embed.FS) (*App, error) {
 	a := new(App)
 	a.app = app.New()
 	// load icon
@@ -55,20 +58,23 @@ func Create(appname string, fs embed.FS, identity string) (*App, error) {
 	a.app.SetIcon(icon)
 
 	// set up window
-	a.window = a.app.NewWindow(appname)
-	a.window.SetFixedSize(true)
+	a.mainWindow = a.app.NewWindow(appname)
+	a.mainWindow.SetFixedSize(true)
 
 	// set up system tray
 	a.setSystemTrayMenu(
 		fyne.NewMenu(appname,
 			fyne.NewMenuItem("Show", func() {
-				a.window.Show()
+				a.mainWindow.Show()
 			}),
 			fyne.NewMenuItem("Renew", func() {
 				a.renew()
 			}),
 		))
 	a.setSystemTrayIcon(icon)
+
+	// get identity from preferences
+	identity := a.app.Preferences().StringWithFallback("identity", "id_opkssh")
 
 	// set up opkssh renewer
 	renewer, err := opkssh.NewRenewer(identity, time.Hour*23)
@@ -81,6 +87,8 @@ func Create(appname string, fs embed.FS, identity string) (*App, error) {
 	a.statusText = binding.NewString()
 	a.age = binding.NewString()
 	a.forceRenewal = binding.NewBool()
+	a.settingsIdentity = binding.NewString()
+	a.settingsIdentity.Set(identity)
 
 	// labels
 	a.ageLabel = widget.NewLabelWithData(a.age)
@@ -105,70 +113,75 @@ func Create(appname string, fs embed.FS, identity string) (*App, error) {
 	a.renewButton = widget.NewButtonWithIcon("Renew Identity", renewIcon, func() {})
 	a.renewButton.OnTapped = a.renew
 
-	// refresh age
-	go func() {
-		for {
-			// sleep for a minute
-			time.Sleep(time.Minute)
+	// settings modal
+	a.createSettingsPopup()
 
-			fyne.Do(a.setagelabel)
-			a.setsystraytooltip()
+	// update status and refresh stuff every minute in the background
+	go a.update(time.Minute)
 
-			identityAge := renewer.IdentityAge()
-
-			// is identity missing
-			if identityAge == -1 {
-				// set status
-				a.statusText.Set("No identity found")
-
-				// send notification
-				if !a.expiryMissing {
-					a.notification("Identity missing", "No SSH identity was found, please renew")
-					a.expiryMissing = true
-				}
-				continue
-			}
-
-			// have we expired?
-			if identityAge > time.Hour*24 {
-				// set status
-				a.statusText.Set("Current identity has expired")
-
-				// send notification
-				if !a.expiryPassed {
-					a.notification("Identity expired", "The SSH identity has expired and should be renewed")
-					a.expiryPassed = true
-				}
-				continue
-			}
-
-			// are we close to expiry
-			if identityAge > time.Hour*23 {
-				// set status
-				a.statusText.Set("Current identity is close to expiry")
-
-				// send notification
-				if !a.expiryClose {
-					a.notification("Identity nearly expired", "The SSH identity is close to expiry and should be renewed soon")
-					a.expiryClose = true
-				}
-				continue
-			}
-
-			// set status
-			a.statusText.Set("Current identity valid, no action required")
-		}
-	}()
-
-	// build main window
-	a.window.SetContent(a.content())
-	a.window.Show()
+	// build windows
+	a.mainWindow.SetContent(a.content())
+	a.mainWindow.Show()
 
 	return a, nil
 }
 
 func (a *App) Run() {
 	a.app.Run()
+}
+
+func (a *App) update(sleep time.Duration) {
+	for {
+		// sleep for a minute
+		time.Sleep(sleep)
+
+		fyne.Do(a.setagelabel)
+		a.setsystraytooltip()
+
+		identityAge := a.renewer.IdentityAge()
+
+		// is identity missing
+		if identityAge == -1 {
+			// set status
+			a.statusText.Set("No identity found")
+
+			// send notification
+			if !a.expiryMissing {
+				a.notification("Identity missing", "No SSH identity was found, please renew")
+				a.expiryMissing = true
+			}
+			continue
+		}
+
+		// have we expired?
+		if identityAge > time.Hour*24 {
+			// set status
+			a.statusText.Set("Current identity has expired")
+
+			// send notification
+			if !a.expiryPassed {
+				a.notification("Identity expired", "The SSH identity has expired and should be renewed")
+				a.expiryPassed = true
+			}
+			continue
+		}
+
+		// are we close to expiry
+		if identityAge > time.Hour*23 {
+			// set status
+			a.statusText.Set("Current identity is close to expiry")
+
+			// send notification
+			if !a.expiryClose {
+				a.notification("Identity nearly expired", "The SSH identity is close to expiry and should be renewed soon")
+				a.expiryClose = true
+			}
+			continue
+		}
+
+		// set status
+		a.statusText.Set("Current identity valid, no action required")
+	}
 }
 
 func (a *App) renew() {
@@ -279,10 +292,15 @@ func (a *App) notification(title, content string) {
 func (a *App) content() *fyne.Container {
 	return container.New(
 		layout.NewVBoxLayout(),
-		a.titleLabel,
 		container.New(
 			layout.NewHBoxLayout(),
-			widget.NewLabel(a.renewer.Name()),
+			a.titleLabel,
+			layout.NewSpacer(),
+			a.settingsButton,
+		),
+		container.New(
+			layout.NewHBoxLayout(),
+			widget.NewLabelWithData(a.settingsIdentity),
 			a.ageLabel,
 			a.renewButton,
 			a.forceCheck,
@@ -305,8 +323,8 @@ func (a *App) setSystemTrayMenu(menu *fyne.Menu) {
 		desk.SetSystemTrayMenu(menu)
 
 		// make close just hide to tray
-		a.window.SetCloseIntercept(func() {
-			a.window.Hide()
+		a.mainWindow.SetCloseIntercept(func() {
+			a.mainWindow.Hide()
 		})
 	}
 }
@@ -326,4 +344,62 @@ func formatDuration(d time.Duration) string {
 	}
 
 	return fmt.Sprintf("%02dh%02dm", int(d.Hours()), int(d.Minutes())%60)
+}
+
+func (a *App) createSettingsPopup() {
+	// entry widget
+	entry := widget.NewEntryWithData(a.settingsIdentity)
+
+	a.settingsPopup = widget.NewModalPopUp(
+		&widget.Form{
+			Items: []*widget.FormItem{
+				{Text: "Identity Name", Widget: entry},
+			},
+			OnSubmit: func() {
+				// always close
+				defer a.settingsPopup.Hide()
+
+				// save to preferences
+				v, err := a.settingsIdentity.Get()
+				if err != nil {
+					a.notification("Error", "There was a problem saving your settings")
+					return
+				}
+
+				// does renewer need recreating?
+				if v != a.app.Preferences().StringWithFallback("identity", "id_opkssh") {
+					renewer, err := opkssh.NewRenewer(v, time.Hour*23)
+					if err != nil {
+						a.notification("Error", "There was a problem setting up the new renewer")
+						return
+					}
+
+					a.renewer = renewer
+
+					// set ui stuff based on new renewer
+					a.setsystraytooltip()
+					a.setagelabel()
+				}
+
+				// set in preferences
+				a.app.Preferences().SetString("identity", v)
+			},
+			OnCancel: func() {
+				// set back to value from preferences
+				a.settingsIdentity.Set(a.app.Preferences().StringWithFallback("identity", "id_opkssh"))
+				a.settingsPopup.Hide()
+			},
+		},
+		a.mainWindow.Canvas(),
+	)
+
+	// set up settings button to show modal
+	a.settingsButton = widget.NewButtonWithIcon("", theme.SettingsIcon(), func() {
+		size := fyne.Size{
+			Width:  a.mainWindow.Content().Size().Width - 15,
+			Height: a.mainWindow.Content().Size().Height - 30,
+		}
+		a.settingsPopup.Resize(size)
+		a.settingsPopup.Show()
+	})
 }
