@@ -106,11 +106,7 @@ func Create(appname string, fs embed.FS) (*App, error) {
 	a.forceCheck = widget.NewCheckWithData("Force?", a.forceRenewal)
 
 	// renew button
-	renewIcon, err := loadIcon(fs, "icons/refresh.png")
-	if err != nil {
-		return nil, fmt.Errorf("error loading icon: %w", err)
-	}
-	a.renewButton = widget.NewButtonWithIcon("Renew Identity", renewIcon, func() {})
+	a.renewButton = widget.NewButtonWithIcon("Renew Identity", theme.HistoryIcon(), func() {})
 	a.renewButton.OnTapped = a.renew
 
 	// settings modal
