@@ -32,9 +32,10 @@ type App struct {
 	identity         binding.String
 
 	// labels
-	ageLabel    *widget.Label
-	statusLabel *widget.Label
-	titleLabel  *widget.Label
+	ageLabel      *widget.Label
+	identityLabel *widget.Label
+	statusLabel   *widget.Label
+	titleLabel    *widget.Label
 
 	// widgets
 	forceCheck     *widget.Check
@@ -95,7 +96,9 @@ func Create(appname string, fs embed.FS) (*App, error) {
 
 	// labels
 	a.ageLabel = widget.NewLabelWithData(a.age)
+	a.identityLabel = widget.NewLabelWithData(a.identity)
 	a.statusLabel = widget.NewLabelWithData(a.statusText)
+	a.statusLabel.Truncation = fyne.TextTruncateEllipsis
 	a.titleLabel = widget.NewLabel("Identity")
 	a.titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 
@@ -120,7 +123,13 @@ func Create(appname string, fs embed.FS) (*App, error) {
 
 	// build windows
 	a.mainWindow.SetContent(a.content())
+
+	// resize a bit bigger than content in case things change
 	a.mainWindow.Show()
+	a.mainWindow.Resize(fyne.Size{
+		Width:  a.mainWindow.Content().Size().Width + 200,
+		Height: a.mainWindow.Content().Size().Height,
+	})
 
 	return a, nil
 }
@@ -289,6 +298,15 @@ func (a *App) notification(title, content string) {
 }
 
 func (a *App) content() *fyne.Container {
+	// row to show identity name, age, renew and force
+	identityRow := container.New(
+		layout.NewHBoxLayout(),
+		a.identityLabel,
+		layout.NewSpacer(),
+		a.ageLabel,
+		a.renewButton,
+		a.forceCheck,
+	)
 	return container.New(
 		layout.NewVBoxLayout(),
 		container.New(
@@ -297,13 +315,7 @@ func (a *App) content() *fyne.Container {
 			layout.NewSpacer(),
 			a.settingsButton,
 		),
-		container.New(
-			layout.NewHBoxLayout(),
-			widget.NewLabelWithData(a.identity),
-			a.ageLabel,
-			a.renewButton,
-			a.forceCheck,
-		),
+		identityRow,
 		widget.NewSeparator(),
 		a.statusLabel,
 	)
