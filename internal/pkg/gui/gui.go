@@ -273,6 +273,11 @@ func (a *App) setsystraytooltip() {
 		return
 	}
 
+	if identityAge > time.Hour*24 {
+		systray.SetTooltip("Current identity has expired")
+		return
+	}
+
 	systray.SetTooltip(fmt.Sprintf("Current identity has %s until expiry", formatDuration((time.Hour*24)-identityAge)))
 }
 
