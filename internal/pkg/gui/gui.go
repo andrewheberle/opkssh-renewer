@@ -30,6 +30,7 @@ type App struct {
 	forceRenewal     binding.Bool
 	settingsIdentity binding.String
 	identity         binding.String
+	startHidden      binding.Bool
 
 	// labels
 	ageLabel      *widget.Label
@@ -77,6 +78,7 @@ func Create(appname string, fs embed.FS) (*App, error) {
 
 	// get identity from preferences
 	identity := a.app.Preferences().StringWithFallback("identity", "id_opkssh")
+	startHidden := a.app.Preferences().BoolWithFallback("startHidden", false)
 
 	// set up opkssh renewer
 	renewer, err := opkssh.NewRenewer(identity, time.Hour*23)
@@ -93,6 +95,8 @@ func Create(appname string, fs embed.FS) (*App, error) {
 	a.settingsIdentity.Set(identity)
 	a.identity = binding.NewString()
 	a.identity.Set(identity)
+	a.startHidden = binding.NewBool()
+	a.startHidden.Set(startHidden)
 
 	// labels
 	a.ageLabel = widget.NewLabelWithData(a.age)
@@ -106,6 +110,12 @@ func Create(appname string, fs embed.FS) (*App, error) {
 	a.app.Lifecycle().SetOnStarted(func() {
 		a.setsystraytooltip()
 		a.setagelabel()
+
+		// do we start hidden
+		if startHidden {
+			a.mainWindow.Hide()
+			a.notification("Started", "The application is running in the background")
+		}
 	})
 
 	// force checkbox
@@ -361,10 +371,14 @@ func (a *App) createSettingsPopup() {
 	// entry widget
 	entry := widget.NewEntryWithData(a.settingsIdentity)
 
+	// hidden
+	hiddenCheck := widget.NewCheckWithData("", a.startHidden)
+
 	a.settingsPopup = widget.NewModalPopUp(
 		&widget.Form{
 			Items: []*widget.FormItem{
 				{Text: "Identity Name", Widget: entry},
+				{Text: "Start Hidden", Widget: hiddenCheck},
 			},
 			OnSubmit: func() {
 				// always close
@@ -401,11 +415,21 @@ func (a *App) createSettingsPopup() {
 				// set in preferences and current value
 				a.app.Preferences().SetString("identity", v)
 				a.identity.Set(v)
+
+				// save value of startHidden
+				h, err := a.startHidden.Get()
+				if err != nil {
+					a.notification("Error", "There was a problem saving your settings")
+					return
+				}
+				a.app.Preferences().SetBool("startHidden", h)
 			},
 			OnCancel: func() {
+				defer a.settingsPopup.Hide()
+
 				// set back to value from preferences
 				a.settingsIdentity.Set(a.app.Preferences().StringWithFallback("identity", "id_opkssh"))
-				a.settingsPopup.Hide()
+				a.startHidden.Set(a.app.Preferences().BoolWithFallback("startHidden", false))
 			},
 		},
 		a.mainWindow.Canvas(),

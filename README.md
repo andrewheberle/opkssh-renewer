@@ -56,3 +56,7 @@ A GUI is available however this is in early stages of development and is not exp
 The GUI runs as a daemon and will provide a notification when the current identity is close to or has expired and allow renewing of this identity.
 
 This is a very unpolished solution at this time and should not be relied upon for production use.
+
+### Known Issues
+
+On systems with graphics cards that do not fully implement/support OpenGL 2.0 (such as a virtual machine), it is requried to have `openGL32.dll` fil from [Mesa3D](https://fdossena.com/?p=mesa/index.frag) anlongside the executable to provide software rendering for OpenGL.
