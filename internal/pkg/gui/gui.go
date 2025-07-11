@@ -44,6 +44,9 @@ type App struct {
 	settingsButton *widget.Button
 	settingsPopup  *widget.PopUp
 
+	// channel to signal we are done
+	done chan bool
+
 	renewer *opkssh.Renewer
 
 	app        fyne.App
@@ -87,6 +90,9 @@ func Create(appname string, fs embed.FS) (*App, error) {
 	}
 	a.renewer = renewer
 
+	// set up channel
+	a.done = make(chan bool)
+
 	// bindings
 	a.statusText = binding.NewString()
 	a.age = binding.NewString()
@@ -106,7 +112,7 @@ func Create(appname string, fs embed.FS) (*App, error) {
 	a.titleLabel = widget.NewLabel("Identity")
 	a.titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 
-	// set default systray tooltip
+	// set up hooks for start/stop
 	a.app.Lifecycle().SetOnStarted(func() {
 		a.setsystraytooltip()
 		a.setagelabel()
@@ -116,6 +122,10 @@ func Create(appname string, fs embed.FS) (*App, error) {
 			a.mainWindow.Hide()
 			a.notification("Started", "The application is running in the background")
 		}
+	})
+	a.app.Lifecycle().SetOnStopped(func() {
+		// stop background task
+		a.done <- true
 	})
 
 	// force checkbox
@@ -149,56 +159,61 @@ func (a *App) Run() {
 }
 
 func (a *App) update(sleep time.Duration) {
+	t := time.NewTicker(sleep)
+	defer t.Stop()
+
 	for {
-		// sleep for a minute
-		time.Sleep(sleep)
+		select {
+		case <-a.done:
+			return
+		case <-t.C:
+			fyne.Do(a.setagelabel)
+			a.setsystraytooltip()
 
-		fyne.Do(a.setagelabel)
-		a.setsystraytooltip()
+			identityAge := a.renewer.IdentityAge()
 
-		identityAge := a.renewer.IdentityAge()
+			// is identity missing
+			if identityAge == -1 {
+				// set status
+				a.statusText.Set("No identity found")
 
-		// is identity missing
-		if identityAge == -1 {
-			// set status
-			a.statusText.Set("No identity found")
-
-			// send notification
-			if !a.expiryMissing {
-				a.notification("Identity missing", "No SSH identity was found, please renew")
-				a.expiryMissing = true
+				// send notification
+				if !a.expiryMissing {
+					a.notification("Identity missing", "No SSH identity was found, please renew")
+					a.expiryMissing = true
+				}
+				continue
 			}
-			continue
-		}
 
-		// have we expired?
-		if identityAge > time.Hour*24 {
-			// set status
-			a.statusText.Set("Current identity has expired")
+			// have we expired?
+			if identityAge > time.Hour*24 {
+				// set status
+				a.statusText.Set("Current identity has expired")
 
-			// send notification
-			if !a.expiryPassed {
-				a.notification("Identity expired", "The SSH identity has expired and should be renewed")
-				a.expiryPassed = true
+				// send notification
+				if !a.expiryPassed {
+					a.notification("Identity expired", "The SSH identity has expired and should be renewed")
+					a.expiryPassed = true
+				}
+				continue
 			}
-			continue
-		}
 
-		// are we close to expiry
-		if identityAge > time.Hour*23 {
-			// set status
-			a.statusText.Set("Current identity is close to expiry")
+			// are we close to expiry
+			if identityAge > time.Hour*23 {
+				// set status
+				a.statusText.Set("Current identity is close to expiry")
 
-			// send notification
-			if !a.expiryClose {
-				a.notification("Identity nearly expired", "The SSH identity is close to expiry and should be renewed soon")
-				a.expiryClose = true
+				// send notification
+				if !a.expiryClose {
+					a.notification("Identity nearly expired", "The SSH identity is close to expiry and should be renewed soon")
+					a.expiryClose = true
+				}
+				continue
 			}
-			continue
-		}
 
-		// set status
-		a.statusText.Set("Current identity valid, no action required")
+			// set status
+			a.statusText.Set("Current identity valid, no action required")
+		}
 	}
 }
 
