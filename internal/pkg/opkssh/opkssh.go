@@ -127,10 +127,12 @@ func (r *Renewer) run(force bool) error {
 func (r *Renewer) IdentityAge() time.Duration {
 	// stat file
 	stat, err := os.Stat(r.identityPath())
+	// return -1 on error
 	if err != nil {
 		return -1
 	}
 
+	// otherwise return duration
 	return time.Since(stat.ModTime())
 }
 
