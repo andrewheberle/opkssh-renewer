@@ -28,6 +28,9 @@ type Application struct {
 	mStatus *systray.MenuItem
 	mQuit   *systray.MenuItem
 
+	expiryNearNotified bool
+	expiredNotified    bool
+
 	renewer *opkssh.Renewer
 }
 
@@ -110,22 +113,42 @@ func (app *Application) updateTicker() {
 			systray.SetTooltip(app.statusText())
 
 			if app.renewer.IdentityAge() > time.Hour*24 {
-				app.mStatus.Enable()
-				if err := beeep.Notify("Identity Expired", "The current identity has expired and should be renewed", app.notificationIcon); err != nil {
-					slog.Error("could not send notification", "error", err)
+				// re-enable renew menu item
+				app.mRenew.Enable()
+
+				// only send notification once
+				if !app.expiredNotified {
+					if err := beeep.Notify("Identity Expired", "The current identity has expired and should be renewed", app.notificationIcon); err != nil {
+						slog.Error("could not send notification", "error", err)
+						return
+					}
+
+					// mark as successfully notified
+					app.expiredNotified = true
 				}
 				return
 			}
 
 			if app.renewer.IdentityAge() > time.Hour*23 {
-				app.mStatus.Enable()
-				if err := beeep.Notify("Identity Nearly Expired", "The current identity is close to expiry and should be renewed soon", app.notificationIcon); err != nil {
-					slog.Error("could not send notification", "error", err)
+				// re-enable renew menu item
+				app.mRenew.Enable()
+
+				// only send notification once
+				if !app.expiryNearNotified {
+					if err := beeep.Notify("Identity Nearly Expired", "The current identity is close to expiry and should be renewed soon", app.notificationIcon); err != nil {
+						slog.Error("could not send notification", "error", err)
+
+						return
+					}
+
+					// mark as successfully notified
+					app.expiryNearNotified = true
 				}
 				return
 			}
 
-			app.mStatus.Disable()
+			// make sure renew menu item is disabled
+			app.mRenew.Disable()
 		}
 	}
 }
@@ -161,14 +184,8 @@ func (app *Application) renew(forced bool) {
 	app.mRenew.Disable()
 	app.mForce.Disable()
 
-	// run normal or forced renewal
-	if err := func() error {
-		if forced {
-			return app.renewer.ForceRenew()
-		}
-
-		return app.renewer.Renew()
-	}; err != nil {
+	// always run forced renewal as we are checking life/exipry ourselves
+	if err := app.renewer.ForceRenew(); err != nil {
 		if err := beeep.Notify("Error", fmt.Sprintf("Error during identity renewal: %s", err), app.notificationIcon); err != nil {
 			slog.Error("could not send notification", "error", err)
 		}
@@ -178,6 +195,14 @@ func (app *Application) renew(forced bool) {
 	if err := beeep.Notify("Identity Renewed", "The identity was successfully renewed", app.notificationIcon); err != nil {
 		slog.Error("could not send notification", "error", err)
 	}
+
+	// reset various state on successful renew
+	app.expiredNotified = false
+	app.expiryNearNotified = false
+	app.mRenew.Disable()
+	app.mStatus.SetTitle(app.status())
+	app.mStatus.SetTooltip(app.statusText())
+	systray.SetTooltip(app.statusText())
 }
 
 func (app *Application) status() string {
