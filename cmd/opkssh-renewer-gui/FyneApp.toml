@@ -1,0 +1,6 @@
+[Details]
+  Icon = "icons/app.png"
+  Name = "OpkSSH Renewer"
+  ID = "com.github.andrewheberle.opkssh-renewer"
+  Version = "0.7.0"
+  Build = 2

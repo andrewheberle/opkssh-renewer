@@ -1,1 +1,3 @@
 *.exe
+fyne_metadata_init.go
+fyne.syso
