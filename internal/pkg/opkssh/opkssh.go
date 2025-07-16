@@ -48,14 +48,28 @@ func NewRenewer(name string, life time.Duration, opts ...RenewerOption) (*Renewe
 }
 
 func (r *Renewer) Renew() error {
-	return r.run(false)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancel()
+
+	return r.run(ctx, false)
+}
+
+func (r *Renewer) RenewWithContext(ctx context.Context) error {
+	return r.run(ctx, false)
 }
 
 func (r *Renewer) ForceRenew() error {
-	return r.run(true)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancel()
+
+	return r.run(ctx, true)
 }
 
-func (r *Renewer) run(force bool) error {
+func (r *Renewer) ForceRenewWithContext(ctx context.Context) error {
+	return r.run(ctx, true)
+}
+
+func (r *Renewer) run(ctx context.Context, force bool) error {
 	// find home dir
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -92,7 +106,7 @@ func (r *Renewer) run(force bool) error {
 	// do opkssh login
 	r.logger.Info("starting opkssh login flow")
 	newOpkKey := filepath.Join(tmpDir, r.name)
-	if err := opksshLogin(newOpkKey); err != nil {
+	if err := opksshLogin(ctx, newOpkKey); err != nil {
 		return fmt.Errorf("problem with opkssh login: %w", err)
 	}
 
@@ -145,10 +159,7 @@ func (r *Renewer) identityPath() string {
 	return filepath.Join(r.home, ".ssh", r.name)
 }
 
-func opksshLogin(keypath string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
-	defer cancel()
-
+func opksshLogin(ctx context.Context, keypath string) error {
 	// set up opkssh login command
 	login := commands.NewLogin(false, "", false, "", false, false, false, "", keypath, "")
 

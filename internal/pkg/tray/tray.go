@@ -106,6 +106,8 @@ func (app *Application) updateTicker() {
 	for {
 		select {
 		case <-app.done:
+			// quit app
+			systray.Quit()
 			return
 		case <-t.C:
 			app.mStatus.SetTitle(app.status())
@@ -162,7 +164,6 @@ func (app *Application) eventloop() {
 			app.renew(true)
 		case <-app.mQuit.ClickedCh:
 			app.done <- true
-			systray.Quit()
 			return
 		}
 	}
@@ -176,13 +177,14 @@ func (app *Application) renew(forced bool) {
 
 	// re-enable menu items at end
 	defer func() {
-		app.mRenew.Enable()
 		app.mForce.Enable()
+		app.mQuit.Enable()
 	}()
 
 	// disable so we aren't doing two things at a time
 	app.mRenew.Disable()
 	app.mForce.Disable()
+	app.mQuit.Disable()
 
 	// always run forced renewal as we are checking life/exipry ourselves
 	if err := app.renewer.ForceRenew(); err != nil {
@@ -199,7 +201,6 @@ func (app *Application) renew(forced bool) {
 	// reset various state on successful renew
 	app.expiredNotified = false
 	app.expiryNearNotified = false
-	app.mRenew.Disable()
 	app.mStatus.SetTitle(app.status())
 	app.mStatus.SetTooltip(app.statusText())
 	systray.SetTooltip(app.statusText())
