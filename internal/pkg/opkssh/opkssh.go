@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/andrewheberle/opkssh-renewer/pkg/sshagent"
+	"github.com/andrewheberle/sshagent"
 	"github.com/openpubkey/opkssh/commands"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"

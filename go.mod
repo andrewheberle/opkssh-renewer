@@ -5,20 +5,21 @@ go 1.24.2
 require (
 	fyne.io/fyne/v2 v2.6.1
 	fyne.io/systray v1.11.0
-	github.com/Microsoft/go-winio v0.6.2
 	github.com/andrewheberle/simplecommand v0.3.0
+	github.com/andrewheberle/sshagent v1.0.0
 	github.com/bep/simplecobra v0.6.0
 	github.com/gen2brain/beeep v0.11.1
 	github.com/getlantern/systray v1.2.2
 	github.com/openpubkey/opkssh v0.7.0
 	github.com/sergeymakinen/go-ico v1.0.0-beta.0
-	golang.org/x/crypto v0.36.0
+	golang.org/x/crypto v0.40.0
 )
 
 require (
 	filippo.io/bigmod v0.0.3 // indirect
 	git.sr.ht/~jackmordaunt/go-toast v1.1.2 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
+	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/andrewheberle/simpleviper v1.1.1 // indirect
 	github.com/awnumar/memcall v0.1.2 // indirect
 	github.com/awnumar/memguard v0.22.3 // indirect
@@ -98,9 +99,9 @@ require (
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
 	golang.org/x/image v0.24.0 // indirect
-	golang.org/x/net v0.38.0 // indirect
+	golang.org/x/net v0.41.0 // indirect
 	golang.org/x/oauth2 v0.25.0 // indirect
-	golang.org/x/sys v0.31.0 // indirect
-	golang.org/x/text v0.23.0 // indirect
+	golang.org/x/sys v0.34.0 // indirect
+	golang.org/x/text v0.27.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
