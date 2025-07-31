@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/andrewheberle/opkssh-renewer/pkg/cmd"
+	"github.com/andrewheberle/opkssh-renewer/internal/pkg/cmd"
 )
 
 func main() {
