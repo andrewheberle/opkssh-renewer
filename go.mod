@@ -5,9 +5,9 @@ go 1.24.2
 require (
 	fyne.io/fyne/v2 v2.6.1
 	fyne.io/systray v1.11.0
-	github.com/andrewheberle/simplecommand v0.3.0
+	github.com/andrewheberle/simplecommand v0.3.1
 	github.com/andrewheberle/sshagent v1.0.0
-	github.com/bep/simplecobra v0.6.0
+	github.com/bep/simplecobra v0.6.1
 	github.com/gen2brain/beeep v0.11.1
 	github.com/getlantern/systray v1.2.2
 	github.com/openpubkey/opkssh v0.7.0
@@ -20,7 +20,7 @@ require (
 	git.sr.ht/~jackmordaunt/go-toast v1.1.2 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/andrewheberle/simpleviper v1.1.1 // indirect
+	github.com/andrewheberle/simpleviper v1.2.0 // indirect
 	github.com/awnumar/memcall v0.1.2 // indirect
 	github.com/awnumar/memguard v0.22.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -81,7 +81,7 @@ require (
 	github.com/spf13/afero v1.12.0 // indirect
 	github.com/spf13/cast v1.7.1 // indirect
 	github.com/spf13/cobra v1.9.1 // indirect
-	github.com/spf13/pflag v1.0.6 // indirect
+	github.com/spf13/pflag v1.0.7 // indirect
 	github.com/spf13/viper v1.20.1 // indirect
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c // indirect
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef // indirect
