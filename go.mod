@@ -11,7 +11,7 @@ require (
 	github.com/gen2brain/beeep v0.11.1
 	github.com/getlantern/systray v1.2.2
 	github.com/openpubkey/opkssh v0.7.0
-	github.com/sergeymakinen/go-ico v1.0.0-beta.0
+	github.com/sergeymakinen/go-ico v1.0.0
 	golang.org/x/crypto v0.40.0
 )
 
