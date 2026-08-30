@@ -1,13 +1,13 @@
 module github.com/andrewheberle/opkssh-renewer
 
-go 1.24.2
+go 1.26
 
 require (
 	fyne.io/fyne/v2 v2.6.1
 	fyne.io/systray v1.11.0
 	github.com/andrewheberle/simplecommand v0.3.1
 	github.com/andrewheberle/sshagent v1.0.0
-	github.com/bep/simplecobra v0.6.1
+	github.com/bep/simplecobra v0.8.0
 	github.com/gen2brain/beeep v0.11.1
 	github.com/getlantern/systray v1.2.2
 	github.com/openpubkey/opkssh v0.7.0
@@ -80,8 +80,8 @@ require (
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.12.0 // indirect
 	github.com/spf13/cast v1.7.1 // indirect
-	github.com/spf13/cobra v1.9.1 // indirect
-	github.com/spf13/pflag v1.0.7 // indirect
+	github.com/spf13/cobra v1.10.2 // indirect
+	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/spf13/viper v1.20.1 // indirect
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c // indirect
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef // indirect
