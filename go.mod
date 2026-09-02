@@ -8,7 +8,7 @@ require (
 	github.com/andrewheberle/simplecommand v0.3.1
 	github.com/andrewheberle/sshagent v1.0.0
 	github.com/bep/simplecobra v0.6.1
-	github.com/gen2brain/beeep v0.11.1
+	github.com/gen2brain/beeep v0.11.2
 	github.com/getlantern/systray v1.2.2
 	github.com/openpubkey/opkssh v0.7.0
 	github.com/sergeymakinen/go-ico v1.0.0-beta.0
