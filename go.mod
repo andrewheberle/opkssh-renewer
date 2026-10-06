@@ -1,12 +1,12 @@
 module github.com/andrewheberle/opkssh-renewer
 
-go 1.24.2
+go 1.25.0
 
 require (
 	fyne.io/fyne/v2 v2.6.1
 	fyne.io/systray v1.11.0
 	github.com/andrewheberle/simplecommand v0.3.1
-	github.com/andrewheberle/sshagent v1.0.0
+	github.com/andrewheberle/sshagent v1.1.0
 	github.com/bep/simplecobra v0.6.1
 	github.com/gen2brain/beeep v0.11.1
 	github.com/getlantern/systray v1.2.2
