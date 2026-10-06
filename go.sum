@@ -20,6 +20,8 @@ github.com/andrewheberle/simpleviper v1.2.0 h1:pg+4BF5MmxQ8r7I3UmWz6w56z0akYyQ1C
 github.com/andrewheberle/simpleviper v1.2.0/go.mod h1:h27fll0wuI9Q3m5YfqFBnSy3oqCreQLBBnw0Yro+IGE=
 github.com/andrewheberle/sshagent v1.0.0 h1:fqyiiEJGHc2nxDAhtQnYYeh+nxlKGLjSphAVU/YDH7Y=
 github.com/andrewheberle/sshagent v1.0.0/go.mod h1:n/xAqd896rpytmQnumHk7qVPN2yixUbfgq6fsEP/nBU=
+github.com/andrewheberle/sshagent v1.1.0 h1:UUKJ7LSGdnRZgso4NRwX+93eN0HJ4gl+WQAd+FqdRmc=
+github.com/andrewheberle/sshagent v1.1.0/go.mod h1:5XBxii3k4fbw1wt2i2P/WqVwb48WMKoOWEwx8WU4DNc=
 github.com/awnumar/memcall v0.1.2 h1:7gOfDTL+BJ6nnbtAp9+HQzUFjtP1hEseRQq8eP055QY=
 github.com/awnumar/memcall v0.1.2/go.mod h1:S911igBPR9CThzd/hYQQmTc9SWNu3ZHIlCGaWsWsoJo=
 github.com/awnumar/memguard v0.22.3 h1:b4sgUXtbUjhrGELPbuC62wU+BsPQy+8lkWed9Z+pj0Y=
