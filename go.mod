@@ -8,7 +8,7 @@ require (
 	github.com/andrewheberle/simplecommand v0.3.1
 	github.com/andrewheberle/sshagent v1.0.0
 	github.com/bep/simplecobra v0.6.1
-	github.com/gen2brain/beeep v0.11.1
+	github.com/gen2brain/beeep v0.12.0
 	github.com/getlantern/systray v1.2.2
 	github.com/openpubkey/opkssh v0.7.0
 	github.com/sergeymakinen/go-ico v1.0.0-beta.0
@@ -25,6 +25,7 @@ require (
 	github.com/awnumar/memguard v0.22.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
+	github.com/ebitengine/purego v0.10.2 // indirect
 	github.com/esiqveland/notify v0.13.3 // indirect
 	github.com/fredbi/uri v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
